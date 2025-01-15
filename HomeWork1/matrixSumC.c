@@ -21,7 +21,7 @@
 #include <sys/time.h>
 #define MAXSIZE 10000  /* maximum matrix size */
 #define MAXWORKERS 10   /* maximum number of workers */
-#define DEBUG
+//#define DEBUG
 
 
 pthread_mutex_t barrier;  /* mutex lock for the barrier */
@@ -130,9 +130,9 @@ void *Worker(void *arg) {
   last = (myid == numWorkers - 1) ? (size - 1) : (first + stripSize - 1);
 
 
-    struct extremeValues maxStruct, minStruct;
-    struct extremeValues *max = &maxStruct;
-    struct extremeValues *min = &minStruct;
+  struct extremeValues* max = (struct extremeValues*) malloc(sizeof(struct extremeValues));
+  struct extremeValues* min = (struct extremeValues*) malloc(sizeof(struct extremeValues));
+
 
 
 // Initialize max and min to values from the matrix
@@ -189,6 +189,10 @@ for (i = first; i <= last; i++){
     /* get end time */
 
     end_time = read_timer();
+
+
+
+
     /* print results */
     printf("The max value of the matrix is: %d\n", max->value );
     printf("at the postition: [%d,%d]\n", max->position[0], max->position[1]);
@@ -196,5 +200,7 @@ for (i = first; i <= last; i++){
     printf("at the postition: [%d,%d]\n", min->position[0], min->position[1]);
     printf("The total is %d\n", total);
     printf("The execution time is %g sec\n", end_time - start_time);
+    free(min);
+    free(max);
   }
 }
