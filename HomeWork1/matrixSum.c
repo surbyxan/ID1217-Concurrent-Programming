@@ -26,9 +26,14 @@ pthread_cond_t go;        /* condition variable for leaving */
 int numWorkers;           /* number of workers */ 
 int numArrived = 0;       /* number who have arrived */
 
+struct extremeValues {
+  int position[2];    //define the position of our extreme value, position[0] = place in first array, position[1] = place in second array
+  int value;          //the value of the extreme value
+}; 
+
 /* a reusable counter barrier */
 void Barrier() {
-  pthread_mutex_lock(&barrier);
+  pthread_mutex_lock(&barrier); 
   numArrived++;
   if (numArrived == numWorkers) {
     numArrived = 0;
@@ -57,6 +62,9 @@ int size, stripSize;  /* assume size is multiple of numWorkers */
 int sums[MAXWORKERS]; /* partial sums */
 int matrix[MAXSIZE][MAXSIZE]; /* matrix */
 
+struct extremeValues* maxArray[MAXWORKERS];
+struct extremeValues* minArray[MAXWORKERS];
+
 void *Worker(void *);
 
 /* read command line, initialize, and create threads */
@@ -79,7 +87,7 @@ int main(int argc, char *argv[]) {
   numWorkers = (argc > 2)? atoi(argv[2]) : MAXWORKERS;
   if (size > MAXSIZE) size = MAXSIZE;
   if (numWorkers > MAXWORKERS) numWorkers = MAXWORKERS;
-  stripSize = size/numWorkers;
+  stripSize = size/numWorkers; //stripsize is 
 
   /* initialize the matrix */
   for (i = 0; i < size; i++) {
@@ -119,21 +127,67 @@ void *Worker(void *arg) {
   /* determine first and last rows of my strip */
   first = myid*stripSize;
   last = (myid == numWorkers - 1) ? (size - 1) : (first + stripSize - 1);
+  
+  struct extremeValues* max;
+  struct extremeValues* min;
+
+  max->value = 0;       //sets the max value to zero 
+  max->position[0] = 0;
+  max->position[1] = 0;
+
+  min->value = 999999;       //sets the min value to a very high number
+  min->position[0] = 0;
+  min->position[1] = 0;
+
 
   /* sum values in my strip */
   total = 0;
-  for (i = first; i <= last; i++)
-    for (j = 0; j < size; j++)
+  for (i = first; i <= last; i++){
+    for (j = 0; j < size; j++){
+      //jämför matrix[i][j] med max spara ifall större samma med min
+      if (matrix[i][j] > max->value){
+        max->value = matrix[i][j];  //makes the comparison and changes for the max value
+        max->position[0]=i;
+        max->position[1]=j;
+      }
+      if (matrix[i][j] < min->value ){
+        min->value = matrix[i][j];    //makes the comparison and changes for the min value
+        min->position[0]=i;
+        min->position[1]=j;
+      }   
       total += matrix[i][j];
-  sums[myid] = total;
+      sums[myid] = total;
+    }
+  }
+    maxArray[myid] = max;
+    minArray[myid] = min;
+    
+  
   Barrier();
   if (myid == 0) {
     total = 0;
-    for (i = 0; i < numWorkers; i++)
+    for (i = 0; i < numWorkers; i++){
+      if(max->value > maxArray[i]->value){
+        max->value = maxArray[i]->value;
+        max->position[0] = maxArray[i]->position[0];
+        max->position[1] = maxArray[i]->position[1];
+      }
+      if(min->value < minArray[i]->value){
+        min->value = minArray[i]->value;
+        min->position[0] = minArray[i]->position[0];
+        min->position[1] = minArray[i]->position[1];
+      }
+    //gå igenom struct array för min och max och hitta min/max
       total += sums[i];
+    }
     /* get end time */
+
     end_time = read_timer();
     /* print results */
+    printf("The max value of the matrix is: %d\n", max->value );
+    printf("at the postition: [%d,%d]", max->position[0], max->position[1]);
+    printf("The min value of the matrix is: %d\n", min->value );
+    printf("at the postition: [%d,%d]", min->position[0], min->position[1]);
     printf("The total is %d\n", total);
     printf("The execution time is %g sec\n", end_time - start_time);
   }
