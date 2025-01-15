@@ -12,6 +12,7 @@
 #ifndef _REENTRANT 
 #define _REENTRANT 
 #endif 
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,6 +21,8 @@
 #include <sys/time.h>
 #define MAXSIZE 10000  /* maximum matrix size */
 #define MAXWORKERS 10   /* maximum number of workers */
+#define DEBUG
+
 
 pthread_mutex_t barrier;  /* mutex lock for the barrier */
 pthread_cond_t go;        /* condition variable for leaving */
@@ -92,7 +95,7 @@ int main(int argc, char *argv[]) {
   /* initialize the matrix */
   for (i = 0; i < size; i++) {
 	  for (j = 0; j < size; j++) {
-          matrix[i][j] = 1;//rand()%99;
+          matrix[i][j] = rand()%99;
 	  }
   }
 
@@ -120,45 +123,48 @@ void *Worker(void *arg) {
   long myid = (long) arg;
   int total, i, j, first, last;
 
-#ifdef DEBUG
-  printf("worker %d (pthread id %d) has started\n", myid, pthread_self());
-#endif
+
 
   /* determine first and last rows of my strip */
   first = myid*stripSize;
   last = (myid == numWorkers - 1) ? (size - 1) : (first + stripSize - 1);
-  
-  struct extremeValues* max;
-  struct extremeValues* min;
-
-  max->value = 0;       //sets the max value to zero 
-  max->position[0] = 0;
-  max->position[1] = 0;
-
-  min->value = 999999;       //sets the min value to a very high number
-  min->position[0] = 0;
-  min->position[1] = 0;
 
 
-  /* sum values in my strip */
-  total = 0;
-  for (i = first; i <= last; i++){
+    struct extremeValues maxStruct, minStruct;
+    struct extremeValues *max = &maxStruct;
+    struct extremeValues *min = &minStruct;
+
+
+// Initialize max and min to values from the matrix
+max->value = matrix[first][0];
+max->position[0] = first;
+max->position[1] = 0;
+
+min->value = matrix[first][0];
+min->position[0] = first;
+min->position[1] = 0;
+
+total = 0; 
+
+for (i = first; i <= last; i++){
     for (j = 0; j < size; j++){
-      //jämför matrix[i][j] med max spara ifall större samma med min
-      if (matrix[i][j] > max->value){
-        max->value = matrix[i][j];  //makes the comparison and changes for the max value
-        max->position[0]=i;
-        max->position[1]=j;
-      }
-      if (matrix[i][j] < min->value ){
-        min->value = matrix[i][j];    //makes the comparison and changes for the min value
-        min->position[0]=i;
-        min->position[1]=j;
-      }   
-      total += matrix[i][j];
-      sums[myid] = total;
+        if (matrix[i][j] > max->value){ //checks current in matrix with the current max value
+            max->value = matrix[i][j];
+            max->position[0] = i;
+            max->position[1] = j;
+            //printf("Updated max: %d at [%d, %d] by thread id: %ld\n", 
+            //       max->value, max->position[0], max->position[1], myid);
+        }
+        if (matrix[i][j] < min->value){ //checks current in matrix with the current min value
+            min->value = matrix[i][j];
+            min->position[0] = i;
+            min->position[1] = j;
+        }
+        total += matrix[i][j];
+        sums[myid] = total;
+
     }
-  }
+}
     maxArray[myid] = max;
     minArray[myid] = min;
     
@@ -167,12 +173,12 @@ void *Worker(void *arg) {
   if (myid == 0) {
     total = 0;
     for (i = 0; i < numWorkers; i++){
-      if(max->value > maxArray[i]->value){
+      if (maxArray[i]->value > max->value) {//compares current value in max array with the saved max struct
         max->value = maxArray[i]->value;
         max->position[0] = maxArray[i]->position[0];
         max->position[1] = maxArray[i]->position[1];
       }
-      if(min->value < minArray[i]->value){
+      if (minArray[i]->value < min->value) {//compares current value in min array with the saved min struct
         min->value = minArray[i]->value;
         min->position[0] = minArray[i]->position[0];
         min->position[1] = minArray[i]->position[1];
@@ -185,9 +191,9 @@ void *Worker(void *arg) {
     end_time = read_timer();
     /* print results */
     printf("The max value of the matrix is: %d\n", max->value );
-    printf("at the postition: [%d,%d]", max->position[0], max->position[1]);
+    printf("at the postition: [%d,%d]\n", max->position[0], max->position[1]);
     printf("The min value of the matrix is: %d\n", min->value );
-    printf("at the postition: [%d,%d]", min->position[0], min->position[1]);
+    printf("at the postition: [%d,%d]\n", min->position[0], min->position[1]);
     printf("The total is %d\n", total);
     printf("The execution time is %g sec\n", end_time - start_time);
   }
