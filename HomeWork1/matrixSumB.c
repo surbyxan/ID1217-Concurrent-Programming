@@ -34,6 +34,12 @@ struct extremeValues {
   int value;          //the value of the extreme value
 }; 
 
+struct extremeValues* max;
+struct extremeValues* min;
+
+pthread_mutex_t mutex;
+int sum = 0;
+
 /* a reusable counter barrier */
 void Barrier() {
   pthread_mutex_lock(&barrier); 
@@ -72,6 +78,10 @@ void *Worker(void *);
 
 /* read command line, initialize, and create threads */
 int main(int argc, char *argv[]) {
+
+  max = (struct extremeValues*) malloc(sizeof(struct extremeValues));
+  min = (struct extremeValues*) malloc(sizeof(struct extremeValues));
+
   int i, j;
   long l; /* use long in case of a 64-bit system */
   pthread_attr_t attr;
@@ -112,9 +122,26 @@ int main(int argc, char *argv[]) {
 
   /* do the parallel work: create the workers */
   start_time = read_timer();
-  for (l = 0; l < numWorkers; l++)
+  for (l = 0; l < numWorkers; l++){
     pthread_create(&workerid[l], &attr, Worker, (void *) l);
-  pthread_exit(NULL);
+  }
+//join the threads when they are done
+  for (l = 0; l < numWorkers; l++) {
+    pthread_join(workerid[l], NULL);
+  }
+  end_time = read_timer();
+
+    // /* print results */
+    printf("The max value of the matrix is: %d\n", max->value );
+    printf("at the postition: [%d,%d]\n", max->position[0], max->position[1]);
+    printf("The min value of the matrix is: %d\n", min->value );
+    printf("at the postition: [%d,%d]\n", min->position[0], min->position[1]);
+    printf("The total is %d\n", sum);
+    printf("The execution time is %g sec\n", end_time - start_time);
+
+  //free the global max and min
+  free(min);
+  free(max);
 }
 
 /* Each worker sums the values in one strip of the matrix.
@@ -123,84 +150,71 @@ void *Worker(void *arg) {
   long myid = (long) arg;
   int total, i, j, first, last;
 
-
-
   /* determine first and last rows of my strip */
   first = myid*stripSize;
   last = (myid == numWorkers - 1) ? (size - 1) : (first + stripSize - 1);
 
+  struct extremeValues* local_max = (struct extremeValues*) malloc(sizeof(struct extremeValues));
+  struct extremeValues* local_min = (struct extremeValues*) malloc(sizeof(struct extremeValues));
 
-  struct extremeValues* max = (struct extremeValues*) malloc(sizeof(struct extremeValues));
-  struct extremeValues* min = (struct extremeValues*) malloc(sizeof(struct extremeValues));
-
-
+ 
+//trådarna gör beräkningarna lokalt, men det globala värdet uppdateras sekventiellt
+//for i = first i<=last i++
+//uppdatera max, min och addera till lokala sum
+//ta mutex över global sum, min och max
+//lägg lägg till lokal sum till global om man har kontroll
+//kolla om min/max är större/mindre än nuvarande globala min/max
+//släpp mutex
 
 // Initialize max and min to values from the matrix
-max->value = matrix[first][0];
-max->position[0] = first;
-max->position[1] = 0;
+local_max->value = matrix[first][0];
+local_max->position[0] = first;
+local_max->position[1] = 0;
 
-min->value = matrix[first][0];
-min->position[0] = first;
-min->position[1] = 0;
+local_min->value = matrix[first][0];
+local_min->position[0] = first;
+local_min->position[1] = 0;
 
 total = 0; 
+pthread_t mytid = pthread_self();
 
+//do all the calculations in parallell
 for (i = first; i <= last; i++){
     for (j = 0; j < size; j++){
-        if (matrix[i][j] > max->value){ //checks current in matrix with the current max value
-            max->value = matrix[i][j];
-            max->position[0] = i;
-            max->position[1] = j;
-            //printf("Updated max: %d at [%d, %d] by thread id: %ld\n", 
-            //       max->value, max->position[0], max->position[1], myid);
+        if (matrix[i][j] > local_max->value){ //checks current in matrix with the current max value
+            local_max->value = matrix[i][j];
+            local_max->position[0] = i;
+            local_max->position[1] = j;
         }
-        if (matrix[i][j] < min->value){ //checks current in matrix with the current min value
-            min->value = matrix[i][j];
-            min->position[0] = i;
-            min->position[1] = j;
+        if (matrix[i][j] < local_min->value){ //checks current in matrix with the current min value
+            local_min->value = matrix[i][j];
+            local_min->position[0] = i;
+            local_min->position[1] = j;
         }
         total += matrix[i][j];
-        sums[myid] = total;
-
     }
 }
-    maxArray[myid] = max;
-    minArray[myid] = min;
-    
-  
-  Barrier();
-  if (myid == 0) {
-    total = 0;
-    for (i = 0; i < numWorkers; i++){
-      if (maxArray[i]->value > max->value) {//compares current value in max array with the saved max struct
-        max->value = maxArray[i]->value;
-        max->position[0] = maxArray[i]->position[0];
-        max->position[1] = maxArray[i]->position[1];
-      }
-      if (minArray[i]->value < min->value) {//compares current value in min array with the saved min struct
-        min->value = minArray[i]->value;
-        min->position[0] = minArray[i]->position[0];
-        min->position[1] = minArray[i]->position[1];
-      }
-    //gå igenom struct array för min och max och hitta min/max
-      total += sums[i];
-    }
-    /* get end time */
+  //take control of the global variables with mutex and then update them.
+  pthread_mutex_lock(&mutex);
+  sum = sum + total;
 
-    end_time = read_timer();
-
-
-
-
-    /* print results */
-    printf("The max value of the matrix is: %d\n", max->value );
-    printf("at the postition: [%d,%d]\n", max->position[0], max->position[1]);
-    printf("The min value of the matrix is: %d\n", min->value );
-    printf("at the postition: [%d,%d]\n", min->position[0], min->position[1]);
-    printf("The total is %d\n", total);
-    printf("The execution time is %g sec\n", end_time - start_time);
-    free(min);
-    free(max);
+  if(local_max->value > max->value){
+    max->value = local_max->value;
+    max->position[0] = local_max->position[0];
+    max->position[1] = local_max->position[1];
   }
+  if(min->value >= local_min->value){
+    min->value = local_min->value;
+    min->position[0] = local_min->position[0];
+    min->position[1] = local_min->position[1];
+  }
+  pthread_mutex_unlock(&mutex);
+
+  //free the local variables
+  free(local_max);
+  free(local_min);
+
+  //kill the thread
+  pthread_exit(NULL);
+
 }
