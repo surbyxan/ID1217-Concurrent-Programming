@@ -155,7 +155,7 @@ void *Worker(void *arg) {
 
 
  
-//for i = row i<=last i++
+
 //uppdatera max, min och addera till lokala sum
 //ta mutex över global sum, min och max
 //lägg lägg till lokal sum till global om man har kontroll
