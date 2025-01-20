@@ -30,7 +30,7 @@ int numWorkers;           /* number of workers */
 int numArrived = 0;       /* number who have arrived */
 
 struct extremeValues {
-  int position[2];    //define the position of our extreme value, position[0] = place in first array, position[1] = place in second array
+  int position[2];    //define the position of our extreme value, position[0] = place in row array, position[1] = place in second array
   int value;          //the value of the extreme value
 }; 
 
@@ -38,19 +38,11 @@ struct extremeValues* max;
 struct extremeValues* min;
 
 pthread_mutex_t mutex;
+pthread_mutex_t mutexBagOfTasks;
 int sum = 0;
 
-/* a reusable counter barrier */
-void Barrier() {
-  pthread_mutex_lock(&barrier); 
-  numArrived++;
-  if (numArrived == numWorkers) {
-    numArrived = 0;
-    pthread_cond_broadcast(&go);
-  } else
-    pthread_cond_wait(&go, &barrier);
-  pthread_mutex_unlock(&barrier);
-}
+int bagOfTasks = 0;
+
 
 /* timer */
 double read_timer() {
@@ -68,7 +60,6 @@ double read_timer() {
 
 double start_time, end_time; /* start and end times */
 int size, stripSize;  /* assume size is multiple of numWorkers */
-int sums[MAXWORKERS]; /* partial sums */
 int matrix[MAXSIZE][MAXSIZE]; /* matrix */
 
 struct extremeValues* maxArray[MAXWORKERS];
@@ -78,7 +69,7 @@ void *Worker(void *);
 
 /* read command line, initialize, and create threads */
 int main(int argc, char *argv[]) {
-
+  
   max = (struct extremeValues*) malloc(sizeof(struct extremeValues));
   min = (struct extremeValues*) malloc(sizeof(struct extremeValues));
 
@@ -142,86 +133,94 @@ int main(int argc, char *argv[]) {
   //free the global max and min
   free(min);
   free(max);
-
-  
 }
 
 /* Each worker sums the values in one strip of the matrix.
    After a barrier, worker(0) computes and prints the total */
 void *Worker(void *arg) {
   long myid = (long) arg;
-  int total, i, j, first, last;
+  int total, j;
+  int row;
 
-  /* determine first and last rows of my strip */
-  first = myid*stripSize;
-  last = (myid == numWorkers - 1) ? (size - 1) : (first + stripSize - 1);
+  /* determine row and last rows of my strip */
+  //row = myid*stripSize;
+  //last = (myid == numWorkers - 1) ? (size - 1) : (row + stripSize - 1);
 
-  struct extremeValues* local_max = (struct extremeValues*) malloc(sizeof(struct extremeValues));
-  struct extremeValues* local_min = (struct extremeValues*) malloc(sizeof(struct extremeValues));
+  //bag of tasks implementation
+  //worker gets task from bag while(true)  
+  // mutex på bag of task när dom får och uppdaterar
+  //if bagoftasks>=sizeofmatrix break;
+  // gör task (beräkningarna)
+  // klar
+
 
  
-
-//trådarna gör beräkningarna lokalt, men det globala värdet uppdateras sekventiellt
-//for i = first i<=last i++
+//for i = row i<=last i++
 //uppdatera max, min och addera till lokala sum
 //ta mutex över global sum, min och max
 //lägg lägg till lokal sum till global om man har kontroll
 //kolla om min/max är större/mindre än nuvarande globala min/max
 //släpp mutex
 
+while(true){
+  struct extremeValues* local_max = (struct extremeValues*) malloc(sizeof(struct extremeValues));
+  struct extremeValues* local_min = (struct extremeValues*) malloc(sizeof(struct extremeValues));
+  
+  pthread_mutex_lock(&mutexBagOfTasks);
+  row = bagOfTasks;
+  bagOfTasks++;
+  pthread_mutex_unlock(&mutexBagOfTasks);
+  //printf("%d", row);
+
+  if(row >= size){
+    break;
+  }
+//trådarna gör beräkningarna lokalt, men det globala värdet uppdateras sekventiellt
 // Initialize max and min to values from the matrix
-local_max->value = matrix[first][0];
-local_max->position[0] = first;
-local_max->position[1] = 0;
+  local_max->value = matrix[row][0];
+  local_max->position[0] = row;
+  local_max->position[1] = 0;
 
-local_min->value = matrix[first][0];
-local_min->position[0] = first;
-local_min->position[1] = 0;
+  local_min->value = matrix[row][0];
+  local_min->position[0] = row;
+  local_min->position[1] = 0;
 
-total = 0; 
-pthread_t mytid = pthread_self();
+  total = 0; 
 
-//do all the calculations in parallell
-for (i = first; i <= last; i++){
-    for (j = 0; j < size; j++){
-        if (matrix[i][j] > local_max->value){ //checks current in matrix with the current max value
-            local_max->value = matrix[i][j];
-            local_max->position[0] = i;
-            local_max->position[1] = j;
-        }
-        if (matrix[i][j] < local_min->value){ //checks current in matrix with the current min value
-            local_min->value = matrix[i][j];
-            local_min->position[0] = i;
-            local_min->position[1] = j;
-        }
-        total += matrix[i][j];
+  //do all the calculations in parallell
+      for (j = 0; j < size; j++){
+          if (matrix[row][j] > local_max->value){ //checks current in matrix with the current max value
+              local_max->value = matrix[row][j];
+              local_max->position[0] = row;
+              local_max->position[1] = j;
+          }
+          if (matrix[row][j] < local_min->value){ //checks current in matrix with the current min value
+              local_min->value = matrix[row][j];
+              local_min->position[0] = row;
+              local_min->position[1] = j;
+          }
+          total += matrix[row][j];
+      }
+  
+    //take control of the global variables with mutex and then update them.
+    pthread_mutex_lock(&mutex);
+    sum = sum + total;
+
+    if(local_max->value > max->value){
+      max->value = local_max->value;
+      max->position[0] = local_max->position[0];
+      max->position[1] = local_max->position[1];
     }
+    if(min->value >= local_min->value){
+      min->value = local_min->value;
+      min->position[0] = local_min->position[0];
+      min->position[1] = local_min->position[1];
+    }
+    pthread_mutex_unlock(&mutex);
+    //free the local variables
+    free(local_max);
+    free(local_min);
 }
-//ta mutex
-//do shit
-//släpp mutex
-  //take control of the global variables with mutex and then update them.
-  pthread_mutex_lock(&mutex);
-  sum = sum + total;
-
-  if(local_max->value > max->value){
-    max->value = local_max->value;
-    max->position[0] = local_max->position[0];
-    max->position[1] = local_max->position[1];
-  }
-  if(min->value >= local_min->value){
-    min->value = local_min->value;
-    min->position[0] = local_min->position[0];
-    min->position[1] = local_min->position[1];
-  }
-  pthread_mutex_unlock(&mutex);
-
-  //free the local variables
-  free(local_max);
-  free(local_min);
-
-
   //kill the thread
   pthread_exit(NULL);
-
 }
