@@ -8,8 +8,15 @@
 #include <stdbool.h>
 #include <time.h>
 #include <sys/time.h>
-#define MAXSIZE 10000  /* maximum matrix size */
 #define MAXWORKERS 10   /* maximum number of workers */
+
+
+struct quicksort_args {
+    int low;
+    int high;
+    pthread_t thread_id;
+    int arr[];
+};
 
 
 double read_timer() {
@@ -26,6 +33,50 @@ double read_timer() {
 }
 
 //quicksort alogritm
+
+void *quickSort(void *);
+
+
+int main() {
+    int arr[] = {10, 7, 8, 9, 1, 5};
+    int n = sizeof(arr) / sizeof(arr[0]);
+
+    //pthread_attr_t attr;
+
+    /* set global thread attributes */
+    //pthread_attr_init(&attr);
+    //pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+    
+    pthread_t workerid[MAXWORKERS];
+
+    //struct quicksort_args *pargs;
+    //!ändra malloc till rätt storlek sen
+    struct quicksort_args *pargs = malloc(sizeof(struct quicksort_args) + 6 * sizeof(int));
+
+    for (int i = 0; i < 6; i++) {
+        pargs->arr[i] = arr[i];
+    }
+    pargs->low= 0;
+    pargs->high= 6 - 1;
+    pargs->thread_id = workerid[0];
+        
+
+
+    //pargs->arr = arr;
+    
+    pthread_create(&workerid[0], NULL, quickSort, &pargs);
+        //pthread_exit(NULL);
+    //quickSort(arr, 0, n - 1);
+    pthread_join(workerid[0], NULL);
+
+    for (int i = 0; i < n; i++) {
+        printf("%d ", arr[i]);
+    }
+    printf("\n");
+
+    
+    return 0;
+}
 
 void swap(int* a, int* b);
 
@@ -55,20 +106,43 @@ int partition(int arr[], int low, int high) {
     return i + 1;
 }
 
-// The QuickSort function implementation
-void quickSort(int arr[], int low, int high) {
-    if (low < high) {
-		
-        
+// The QuickSort function implementation (the worker function)
+//(void * arguments)
+void *quickSort(void *arguments) {
+    struct quicksort_args *args = arguments;
+
+    struct quicksort_args *high_args = args;
+    struct quicksort_args *low_args = args;
+    printf("test\n");
+    printf("low %d high %d\n", args->high, args->low);
+    
+    if (args->low < args->high) {
+        printf("test1");
         // pi is the partition return index of pivot
-        int pi = partition(arr, low, high);
+        int pi = partition(args->arr, args->low, args->high);
 
         // Recursion calls for smaller elements
         // and greater or equals elements
 		//när vi kallar på quicksort vi vi göra det med en thread
-		//pthread_create(&workerid, &attr, quickSort, (void *) arr; low; pi - 1);
-        quickSort(arr, low, pi - 1);
-        quickSort(arr, pi + 1, high);
+
+        //struct quicksort_args* high_args (lite värden)
+         high_args->low = pi + 1;
+         high_args->thread_id = args->thread_id + 8;
+        //struct quicksort_args* low_args
+         low_args->high = pi-1;
+         low_args->thread_id = args->thread_id;
+
+
+        // pthread_t tid;
+                        //&tid
+        pthread_create(&low_args->thread_id, NULL, quickSort, (void*) &low_args); 
+        printf("%p", &low_args->thread_id);
+        //pthread_exit(NULL);
+        pthread_create(&high_args->thread_id, NULL, quickSort, (void*) &high_args); 
+        printf("%p", &high_args->thread_id);
+        //pthread_exit(NULL);
+        //quickSort(arr, low, pi - 1);
+        //quickSort(arr, pi + 1, high);
 
 		//pthread_join()
     }
@@ -80,17 +154,7 @@ void swap(int* a, int* b) {
     *b = t;
 }
 
-int main() {
-    int arr[] = {10, 7, 8, 9, 1, 5};
-    int n = sizeof(arr) / sizeof(arr[0]);
 
-    quickSort(arr, 0, n - 1);
-    for (int i = 0; i < n; i++) {
-        printf("%d ", arr[i]);
-    }
-    
-    return 0;
-}
 //initialisera variabler för program
 
 //gör en quicksort algoritm
