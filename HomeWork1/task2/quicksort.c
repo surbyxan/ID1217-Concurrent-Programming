@@ -14,8 +14,7 @@
 struct quicksort_args {
     int low;
     int high;
-    pthread_t thread_id;
-    int arr[];
+    int *arr;
 };
 
 
@@ -58,13 +57,15 @@ int main() {
     }
     pargs->low= 0;
     pargs->high= 6 - 1;
-    pargs->thread_id = workerid[0];
         
 
 
     //pargs->arr = arr;
+    //printf("pargs low: %d\n", pargs->low);
+    //printf("pargs high: %d\n", pargs->high);
+
     
-    pthread_create(&workerid[0], NULL, quickSort, &pargs);
+    pthread_create(&workerid[0], NULL, quickSort, pargs);
         //pthread_exit(NULL);
     //quickSort(arr, 0, n - 1);
     pthread_join(workerid[0], NULL);
@@ -109,37 +110,41 @@ int partition(int arr[], int low, int high) {
 // The QuickSort function implementation (the worker function)
 //(void * arguments)
 void *quickSort(void *arguments) {
-    struct quicksort_args *args = arguments;
+    printf("The passed arguments:\n");
+    
+    struct quicksort_args *args = (struct quicksort_args *)arguments;
+    printf("low: %d, high: %d, thread_id: arr[]: \n", args->low, args->high);
 
-    struct quicksort_args *high_args = args;
-    struct quicksort_args *low_args = args;
-    printf("test\n");
-    printf("low %d high %d\n", args->high, args->low);
+
+    //printf("test\n");
+    //printf("low %d high %d\n", args->high, args->low);
     
     if (args->low < args->high) {
-        printf("test1");
+        //printf("test1");
         // pi is the partition return index of pivot
         int pi = partition(args->arr, args->low, args->high);
+        struct quicksort_args high_args = {args->low, pi - 1, args->arr};
+        struct quicksort_args low_args = {pi + 1,args->high, args->arr};
 
         // Recursion calls for smaller elements
         // and greater or equals elements
-		//när vi kallar på quicksort vi vi göra det med en thread
+		//när vi kallar på quicksort vi vi göra det med en thread     
+        
 
-        //struct quicksort_args* high_args (lite värden)
-         high_args->low = pi + 1;
-         high_args->thread_id = args->thread_id + 8;
-        //struct quicksort_args* low_args
-         low_args->high = pi-1;
-         low_args->thread_id = args->thread_id;
-
+         pthread_t low_thread, high_thread;
 
         // pthread_t tid;
-                        //&tid
-        pthread_create(&low_args->thread_id, NULL, quickSort, (void*) &low_args); 
-        printf("%p", &low_args->thread_id);
-        //pthread_exit(NULL);
-        pthread_create(&high_args->thread_id, NULL, quickSort, (void*) &high_args); 
-        printf("%p", &high_args->thread_id);
+        //&tid
+        pthread_create(&low_thread, NULL, quickSort,  &low_args); 
+        //printf("%p", &low_args->thread_id);
+        //pthread_exit(NULL);       
+
+        pthread_create(&high_thread, NULL, quickSort, &high_args); 
+        //printf("%p", &high_args->thread_id);
+        pthread_exit(NULL);
+        pthread_join(low_thread, NULL);
+        pthread_join(high_thread, NULL);
+
         //pthread_exit(NULL);
         //quickSort(arr, low, pi - 1);
         //quickSort(arr, pi + 1, high);
