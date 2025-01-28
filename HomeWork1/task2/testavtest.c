@@ -9,7 +9,7 @@
 
 #define ERROR_MIN_MORE_MAX_VALUE "Min value is more max value, returned 0"
 
-
+//quicksort algorithm and random array taken from stackoverflow
 
 double read_timer() {
     static bool initialized = false;
@@ -100,10 +100,10 @@ random_int_array(int array[], const size_t length, const int min, const int max)
 int main() {
 
 
-    int arr[100];
+    int arr[100000];
     int n = sizeof(arr) / sizeof(arr[0]);
 
-    random_int_array(arr, 100, 0, 3000);
+    random_int_array(arr, 100000, 0, 100000);
     double start_time = read_timer();
 
 
