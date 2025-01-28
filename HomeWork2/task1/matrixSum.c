@@ -4,6 +4,7 @@ usage with gcc (version 4.2 or higher required):
 gcc -O -fopenmp -o matrixSum-openmp matrixSum-openmp.c
 gcc -O -fopenmp -o matrixSum matrixSum.c
 ./matrixSum-openmp size numWorkers
+meow
 */
 #include <omp.h>
 double start_time, end_time;
