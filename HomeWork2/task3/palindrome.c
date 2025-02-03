@@ -2,10 +2,10 @@
 // usage with gcc (version 4.2 or higher required):
 // gcc -O -fopenmp -o matrixSum-openmp matrixSum-openmp.c
 // gcc -O -fopenmp -o matrixSum matrixSum.c
+// gcc -O -fopenmp -o palindrome palindrome.c
 // ./matrixSum-openmp size numWorkers
 
 #include <omp.h>
-double start_time, end_time;
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -17,14 +17,17 @@ double start_time, end_time;
 #include <ctype.h>
 
 #define MAXSIZE 10000 /* maximum matrix size */
-#define MAXWORKERS 8  /* maximum number of workers */
+#define MAXWORKERS 4  /* maximum number of workers */
 
+//new array for all the palindrome words and reverse words
 char *palin[25143];
 
+//compare function for the binary search
 int comfunc(const void* a, const void* b) {
    return strcmp(*(const char**)a, *(const char**)b);
 }
 
+//String reverse from stackoverflow because strrev doesnt exist on linux
 char *strrev(char *str)
 {
       char *p1, *p2;
@@ -40,7 +43,7 @@ char *strrev(char *str)
       return str;
 }
 
-
+//read from file method 
 char **readfromfile(){
     
     FILE *file_ptr;
@@ -61,20 +64,20 @@ char **readfromfile(){
     }
 
     while (fgets(str, sizeof(str), file_ptr) != NULL) {
-    // Remove the newline character if present
+    //Remove the newline character if present
     str[strcspn(str, "\n")] = 0;
 
-    // Allocate memory and store the word in arr1
+    //Allocate memory and store the word in arr1
     if (strlen(str) > 0) {
         for(int i = 0; i < strlen(str); i++){
             if((int) 'A' <= (int) str[i] && (int) str[i] <= (int) 'Z' ){
                 str[i] =(char) ((int) str[i] + 32);
             }
         }
-        arr1[idx] = strdup(str);  // Copy the word to arr1[idx]
+        arr1[idx] = strdup(str);  //Copy the word to arr1[idx]
         if (arr1[idx] == NULL) {
             fprintf(stderr, "Error: Memory allocation failed\n");
-            exit(1);  // or handle it accordingly
+            exit(1); 
         }
         idx++;
     }
@@ -91,29 +94,32 @@ char **readfromfile(){
 
 int main(){
     
-
-    char **arr1; // = (char **)malloc(size * sizeof(char*));
+    //setup for parallel work
+    char **arr1; 
     arr1 = readfromfile();
 	omp_set_num_threads(MAXWORKERS);
+    double time = 0;
 
     //for(int i = 0; i < 25143; i++){
     //    printf("%s\n", arr1[i]);
     //}
 
-    //dela upp arrayn i antalet threads
+    //parallel work
     int totalWords = 25143;
-    int chunk = totalWords/MAXWORKERS;
     int j = 0;
-    #pragma omp parallel shared(palin, j)
+
+    #pragma omp parallel shared(palin, j, time)
     {
-        //int threadId = omp_get_thread_num();
-        //int start = threadId*chunk;
-        //int end = (threadId == MAXWORKERS - 1) ? totalWords : (start + chunk); 
+        double t1 = omp_get_wtime();
+        int threadId = omp_get_thread_num();
+        //printf("Thread nr: %d", threadId);
+ 
         char* strcopy;
         #pragma omp for
         for(int i = 0; i < totalWords; i++){
+            //we make a copy of the current word we are comparing
             strcopy = strdup(arr1[i]);
-
+            //we reverse to the copy to not modify the original array
             if(arr1[i] == strrev(strcopy)){
                 #pragma omp critical
                 {
@@ -125,30 +131,56 @@ int main(){
             else{
                    const char** item;
                     item = (const char**)bsearch(&strcopy, arr1, totalWords, sizeof(const char*), comfunc);
-                    //vi bryr oss bara om när item!= NULL
+                    //binary search gives !NULL output when it is a match
                     if(item != NULL){
                         #pragma omp critical
-                        {
-                        palin[j] = strrev(strcopy);
+                        {   //Critical section for adding words in the global array
+                        palin[j] = strrev(strcopy);     //we reverse again because the copy was reversed in the first if statement
                         j++;
                         }
                     }
     
             }
         }
+        double t2 = omp_get_wtime();
+        #pragma omp critical
+        {
+            time += t2-t1;
+        }
         free(strcopy); 
     }
 
+    /* Printing method for checking the output
     for(int i = 0; i < 25143; i++){
         if(palin[i] == NULL)
             break;
        printf("%s\n", palin[i]);
+    }*/
+   printf("TIME: %f for n-cores: %d\n", time, MAXWORKERS);
+
+    FILE *fptr; //Putting the palin array in a new file 
+    
+    fptr = fopen("output.txt", "w");
+
+    if(fptr == NULL){
+        printf("error");
+    }
+
+    for(int i = 0; i < totalWords; i++){
+        if(palin[i] == NULL)
+            break;
+        fputs(palin[i], fptr);
+        fputs("\n", fptr);
     }
 
     free(arr1);
-   
-	//!överför arrayen till en ny fil med enbart palindrom
+    //free(palin);
     
     return 0;
 }
 
+
+//1 thread 0.0080602
+//2 thread 0.0072842
+//3 thread 0.0055992
+//4 thread 0.0337534
