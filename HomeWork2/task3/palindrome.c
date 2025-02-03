@@ -16,8 +16,7 @@
 #include <string.h> 
 #include <ctype.h>
 
-#define MAXSIZE 10000 /* maximum matrix size */
-#define MAXWORKERS 4  /* maximum number of workers */
+#define MAXWORKERS 3  /* maximum number of workers */
 
 //new array for all the palindrome words and reverse words
 char *palin[25143];
@@ -54,7 +53,7 @@ char **readfromfile(){
     int size = st.st_size;
 
     char **arr1 = (char **)malloc(size * sizeof(char*));
-    char str[50];
+    char str[100];
 
     file_ptr = fopen("words", "r");
 
@@ -100,17 +99,22 @@ int main(){
 	omp_set_num_threads(MAXWORKERS);
     double time = 0;
 
-    //for(int i = 0; i < 25143; i++){
+    //for(int i = 0; i < 104334; i++){
+    //    if(arr1[i]==NULL){
+    //        break;
+    //    }
     //    printf("%s\n", arr1[i]);
     //}
+    //printf("done\n");
 
     //parallel work
     int totalWords = 25143;
     int j = 0;
 
-    #pragma omp parallel shared(palin, j, time)
+    
+    double t1 = omp_get_wtime();
+    #pragma omp parallel shared(palin, j)
     {
-        double t1 = omp_get_wtime();
         int threadId = omp_get_thread_num();
         //printf("Thread nr: %d", threadId);
  
@@ -142,13 +146,11 @@ int main(){
     
             }
         }
-        double t2 = omp_get_wtime();
-        #pragma omp critical
-        {
-            time += t2-t1;
-        }
+
         free(strcopy); 
     }
+    double t2 = omp_get_wtime();
+    time = t2 - t1;
 
     /* Printing method for checking the output
     for(int i = 0; i < 25143; i++){
@@ -181,6 +183,20 @@ int main(){
 
 
 //1 thread 0.0080602
-//2 thread 0.0072842
-//3 thread 0.0055992
-//4 thread 0.0337534
+//2 thread 0.0078528
+//3 thread 0.0087062
+//4 thread 0.01991
+
+
+//STOR ARRAY
+//1 thread 0.018505
+//2 thread 0.0126454
+//3 thread 0.0102788
+//4 thread 0.0076314
+//8 thread
+
+//50k element
+//1 thread 0.0085662
+//2 thread 0.0062246 
+//3 thread 0.0041218
+//4 thread 0.0053752
