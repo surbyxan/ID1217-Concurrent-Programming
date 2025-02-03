@@ -16,7 +16,7 @@
 #include <string.h> 
 #include <ctype.h>
 
-#define MAXWORKERS 3  /* maximum number of workers */
+#define MAXWORKERS 4  /* maximum number of workers */
 
 //new array for all the palindrome words and reverse words
 char *palin[25143];
@@ -91,13 +91,21 @@ char **readfromfile(){
 //spara dessa ord i en ny global array
 
 
-int main(){
+int main(int argc, char *argv[]){
+
+    int numWorkers;
+
+
+    /* read command line args if any */
+    numWorkers = (argc > 1)? atoi(argv[1]) : MAXWORKERS;
+    if (numWorkers > MAXWORKERS) numWorkers = MAXWORKERS;
     
     //setup for parallel work
     char **arr1; 
     arr1 = readfromfile();
-	omp_set_num_threads(MAXWORKERS);
+	omp_set_num_threads(numWorkers);
     double time = 0;
+
 
     //for(int i = 0; i < 104334; i++){
     //    if(arr1[i]==NULL){
@@ -106,6 +114,8 @@ int main(){
     //    printf("%s\n", arr1[i]);
     //}
     //printf("done\n");
+
+
 
     //parallel work
     int totalWords = 25143;
@@ -158,7 +168,7 @@ int main(){
             break;
        printf("%s\n", palin[i]);
     }*/
-   printf("TIME: %f for n-cores: %d\n", time, MAXWORKERS);
+   printf("TIME: %f for n-cores: %d\n", time, numWorkers);
 
     FILE *fptr; //Putting the palin array in a new file 
     
