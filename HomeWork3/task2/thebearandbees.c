@@ -20,7 +20,7 @@ sem_t mutex; //waiting babies
 
 int honeypot = 0;
 
-//parent function
+//Working bee function
 void *bees(void *arg){
     //vi lägga till honey i honeypot om den inte är full.
     //om den är full sätter vi igång väckarklockan och väcker björnen
@@ -47,7 +47,7 @@ void *bees(void *arg){
     }
 }
 
-//babybird function
+//hungry bear function
 void *bear(){
     
     while(true){
@@ -57,7 +57,7 @@ void *bear(){
 
         if(honeypot == 0){
             printf("Bees: WHAT!? The honey is gone!!!!! \n");
-            printf("ʕ•ᴥ•ʔ: zzzzzzzzzZZZzzzzZZZzzzZZZ \n");
+            printf("ʕ•ᴥ•ʔ: zzZZzzzzzZZZzzzzZZZzzzZZZ \n");
             sem_post(&eat);
         }
         else{
