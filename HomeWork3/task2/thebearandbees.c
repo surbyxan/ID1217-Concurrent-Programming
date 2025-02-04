@@ -16,7 +16,6 @@
 
 sem_t serve; //full semaphore
 sem_t eat; //empty semaphore
-sem_t mutex; //waiting babies
 
 int honeypot = 0;
 
