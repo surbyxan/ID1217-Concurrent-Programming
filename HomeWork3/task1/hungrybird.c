@@ -12,20 +12,21 @@
 
 #define WORKERS 4 //cannot be less than 2
 #define SHARED 1
+#define W 10 //
 
 sem_t serve; //full semaphore
 sem_t eat; //empty semaphore
 sem_t mutex; //waiting babies
 
-int worms = 0;
+int worms = W;
 
 //parent function
 void *parent(){
     while(true){
     sem_wait(&eat); //den får den tomma semaphore
     for(int i = 0; i < 10; i++){
-        printf("Parent: I hope my hard work is paying of! I love my baby birds.\n Worms = %d\n", worms);
         worms++; //jobbar hårt och fyller på worms
+        printf("Parent: I hope my hard work is paying of! I love my baby birds.\n Worms = %d\n", worms);
     }
     sem_post(&serve);
     }
@@ -51,8 +52,8 @@ void *babyBird(void *arg){
 
 int main(){
     int id[WORKERS - 1];
-    sem_init(&serve, SHARED, 0);
-    sem_init(&eat, SHARED, 1);
+    sem_init(&serve, SHARED, 1);
+    sem_init(&eat, SHARED, 0);
     pthread_t mommacrow; //parent
     pthread_t babies[WORKERS-1]; //babies
 
