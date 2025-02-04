@@ -50,7 +50,7 @@ void *babyBird(void *arg){
 }
 
 int main(){
-    int id[3];
+    int id[WORKERS - 1];
     sem_init(&serve, SHARED, 0);
     sem_init(&eat, SHARED, 1);
     pthread_t mommacrow; //parent
