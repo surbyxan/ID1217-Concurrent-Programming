@@ -12,7 +12,7 @@
 
 #define WORKERS 4 //cannot be less than 2
 #define SHARED 1
-#define W 10 //
+#define W 10 // worm capacity
 
 sem_t serve; //full semaphore
 sem_t eat; //empty semaphore

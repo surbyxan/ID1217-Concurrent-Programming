@@ -21,12 +21,9 @@ int honeypot = 0;
 
 //Working bee function
 void *bees(void *arg){
-    //vi lägga till honey i honeypot om den inte är full.
-    //om den är full sätter vi igång väckarklockan och väcker björnen
     int argInt = *(int*) arg;
 
-    while(true){
-            
+    while(true){ 
         sem_wait(&eat); //den får den tomma semaphore
         printf("Bees %d: Nothings like a hard days of work, honey is my life\n Honey = %d\n", argInt, honeypot);
         honeypot += 3; //jobbar hårt och fyller på honey
@@ -48,7 +45,6 @@ void *bees(void *arg){
 
 //hungry bear function
 void *bear(){
-    
     while(true){
         sem_wait(&serve);
         if(honeypot < 0)
