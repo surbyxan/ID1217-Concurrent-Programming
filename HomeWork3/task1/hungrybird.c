@@ -23,7 +23,7 @@ int worms = W;
 void *parent(){
     while(true){
         sem_wait(&eat); //den får den tomma semaphore
-        for(int i = 0; i < 10; i++){
+        for(int i = 0; i < W; i++){
             worms++; //jobbar hårt och fyller på worms
             printf("Parent: I hope my hard work is paying of! I love my baby birds.\n Worms = %d\n", worms);
         }
