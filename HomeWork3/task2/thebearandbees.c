@@ -51,8 +51,8 @@ void *bear(){
             honeypot = 0;
 
         if(honeypot == 0){
-            printf("Bees: WHAT!? The honey is gone!!!!! \n");
             printf("ʕ•ᴥ•ʔ: zzZZzzzzzZZZzzzzZZZzzzZZZ \n");
+            printf("Bees: WHAT!? The honey is gone!!!!! \n");
             sem_post(&eat);
         }
         else{
@@ -72,7 +72,8 @@ int main(){
 
     for(int i=0;i < WORKERS-1;i++){
         id[i] = i;
-	    pthread_create(&theBeeCrew[WORKERS-1], NULL, bees, (void *) &id[i]);
+	    pthread_create(&theBeeCrew[i], NULL, bees, (void *) &id[i]);
+        //printf("created thread: %d\n", id[i]);
     }  
     
 	pthread_create(&Bear,NULL,bear, NULL);
