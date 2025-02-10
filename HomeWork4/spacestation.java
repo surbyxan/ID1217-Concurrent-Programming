@@ -7,29 +7,43 @@ import java.io.*;
 import java.net.*;
 import java.util.random.*;
 
-//! gör en ny fil med trådarna och en ny fil som requestar main
+//! monitorn (death star)
 
 public class spacestation {
 	
-
-	Random rnd = new Random();
-	//MONITOR
-	/*
+	/* typ klar tror vi
 	vi har:
-	N fuel för space station
-	Q fuel -::-
 	
+	Random rnd = new Random();
+	int Nmax = 500;
+	int Qmax = 500;
+	int Nfuel = Nmax;
+	int Qfuel =	Qmax;
+
+
 	
-	private void refuel(thread TIEfighter){
-		if(Q <= 0 || N <= 0){
-            cancel thread and start refuel ship thread
-        }
+	synchronized public void refuel(thread TIEfighter){//metod för att tanka som vanligt
         if(tiefighter.Nfuelrequest > N || tiefighter.Qfuelrequest > Q){
             låt en annan tie fighter refuel 
         }
+		int refuelTime = rnd.nextint(10);
         thread.sleep(random);
         tiefighter.Nfuel = tiefighter.Nfuel + tiefighterNfuelrequest;
+		Nfuel = Nfuel - tiefighter.Nfuelrequest;
         tiefighter.Qfuel = tiefighter.Qfuel + tiefighterQfuelrequest;
+		Qfuel = Qfuel - tiefighter.Qfuelrequest;
+	}
+
+	synchronized public void filltank(thread fueler){ //metod för att fylla på tanken med bränsle (spacestation)
+		if(Nmax - Nfuel > fueler.Nfuel && fueler.Nfuel != 0){
+			filltank
+		}
+		else if(Qmax - QFuel > fueler.Qfuel && fueler.Nfuel != 0){
+			filltank
+		}
+		else{
+			wait for space in tank
+		}
 	}
 
 	en metod att fylla på varsin fuel (trådar)
@@ -44,15 +58,6 @@ public class spacestation {
 	*/ 
 
 
-	//Processer (trådarna(TIE-fighers)) 
-	/*
-	skapa tråd
-	skapa metod för refuel beteedende
-	refuel (vänta random tid)
-	skapa metod för TIE-fighter beteende
-	va i rymden i rnd tid
-
-
-	*/
+	
 
 }
