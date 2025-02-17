@@ -6,7 +6,7 @@ public class TheFuelSpaceStation {
 		System.out.println("A long time ago in a galaxy far, far away...");
 		System.out.println("The death star is refueling its TIE-fighters");
 
-		spacestation deathstar = new spacestation(700, 700, 2);
+		spacestation deathstar = new spacestation(600, 600, 2);
 
 
 		//init av threads/ skeppen thread.start()

@@ -83,6 +83,7 @@ public class ships extends Thread{
 						}
 						break;
 					}
+					break;
 				case 1:
 					while(true){
 						try{
@@ -97,6 +98,7 @@ public class ships extends Thread{
 						}
 						break;
 					}
+					break;
 				default:
 					while(true){
 						try{
@@ -124,6 +126,7 @@ public class ships extends Thread{
 						}
 						break;	
 					}	
+					break;
 			}
 		}
 	}

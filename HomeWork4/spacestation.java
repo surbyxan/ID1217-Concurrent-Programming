@@ -1,7 +1,7 @@
 package HomeWork4;
-import java.util.Random;
 /* a long time ago in a galaxy far far away */
 /* the death star is refueling TIE-figheters */
+import java.util.Random;
 import java.util.concurrent.*;
 import java.io.*;
 import java.net.*;
@@ -43,16 +43,22 @@ public class spacestation {
 	public synchronized void refuelN(ships ship){//metod för att tanka som vanligt
         while(ship.requestN() > Nfuel || ports == 0){
 			try {
+				System.out.println("|-o-| TIE-fighter " + ship.getID() + " waits for Nfuel, not enough fuel in the Death Star");
+				System.out.println("The rebellion gains strenght...");
                 wait();
-				System.out.println("|-o-| TIE-fighter waits for Nfuel, not enough fuel in Death Star");
             } catch(InterruptedException e) {
                 System.out.println("|-o-| TIE-fighter " + ship.getID() + " was interrupted");
             }
 				
         }
-		//int refuelTime = rnd.nextint(10);
+		int refuelTime = rnd.nextInt(10);
 		ports--;
 		//sleep
+		try {
+			Thread.sleep(refuelTime);
+		} catch (InterruptedException e) {
+			System.out.println("|-o-| TIE-fighter " + ship.getID() + " was interrupted during refueling");
+		}
 		System.out.println("|-o-| TIE-fighter " + ship.getID() +  " are refueling N, to crush the rebellion");
 		Nfuel = Nfuel - ship.requestN();
         ship.setFuelN(ship.requestN());
@@ -66,15 +72,22 @@ public class spacestation {
         while(ship.requestQ() > Qfuel || ports == 0){
             //låt en annan tie fighter refuel 
 			try {
+				System.out.println("|-o-| TIE-fighter " + ship.getID() +  " waits for Qfuel, not enough fuel in the Death Star");
+				System.out.println("The rebellion gains strenght...");
                 wait();
-				System.out.println("|-o-| TIE-fighter waits for Qfuel, not enough fuel in Death Star");
             } catch(InterruptedException e) {
                 System.out.println("|-o-| TIE-fighter " + ship.getID() + " was interrupted");
             }
         }
 		//int refuelTime = rnd.nextint(10);
+		int refuelTime = rnd.nextInt(10);
 		ports--;
 		//sleep
+		try {
+			Thread.sleep(refuelTime);
+		} catch (InterruptedException e) {
+			System.out.println("|-o-| TIE-fighter " + ship.getID() + " was interrupted during refueling");
+		}
 		System.out.println("|-o-| TIE-fighter " + ship.getID() +  " are refueling Q, to crush the rebellion");
 		Qfuel = Qfuel - ship.requestQ();
 		ship.setFuelQ(ship.requestQ());
@@ -84,28 +97,44 @@ public class spacestation {
 	}
 
 	public synchronized void fillNTank(ships ship){ //metod för att fylla på tanken med bränsle (spacestation)
-		while(Nmax - Nfuel < ship.getFuelN()){
+		while(Nmax - Nfuel < ship.getFuelN() || ports == 0){
 			try {
                 wait();
             } catch(InterruptedException e) {
                 System.out.println("Refueler " + ship.getID() + " was interrupted");
             }
 		}
-		//int refuelTime = rnd.nextint(10);
+		int refuelTime = rnd.nextInt(10);
+		ports--;
+		//sleep
+		try {
+			Thread.sleep(refuelTime);
+		} catch (InterruptedException e) {
+			System.out.println("|-o-| TIE-fighter " + ship.getID() + " was interrupted during refueling");
+		}
 		Nfuel = Nfuel + ship.getFuelN();
+		ports++;
 		notifyAll();
 	}
 
 	public synchronized void fillQTank(ships ship){
-		while(Qmax - Qfuel < ship.getFuelQ()){
+		while(Qmax - Qfuel < ship.getFuelQ() || ports == 0){
 			try {
                 wait();
             } catch(InterruptedException e) {
                 System.out.println("Refueler " + ship.getID() + " was interrupted");
             }
 		}
-		//int refuelTime = rnd.nextint(10);
+		int refuelTime = rnd.nextInt(10);
+		ports--;
+		//sleep
+		try {
+			Thread.sleep(refuelTime);
+		} catch (InterruptedException e) {
+			System.out.println("|-o-| TIE-fighter " + ship.getID() + " was interrupted during refueling");
+		}
 		Qfuel = Qfuel + ship.getFuelQ();
+		ports++;
 		notifyAll();
 		}
 
