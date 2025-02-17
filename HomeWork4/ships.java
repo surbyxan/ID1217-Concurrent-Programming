@@ -16,6 +16,7 @@ public class ships extends Thread{
 	spacestation deathstar;
 
 
+
     public ships(spacestation deathstar, int tankSizeN, int tankSizeQ, int id){
         //N & Q differ if the constructor is used on the refueler ships,
         //otherwise if it is the tiefighters, they will be the same size.
@@ -28,6 +29,35 @@ public class ships extends Thread{
     }
 	
 	//Processer (trådarna(TIE-fighers)) 
+		//tanka
+	public void setFuelN(int fuel){
+		currN = currN + fuel;
+	}
+
+	public void setFuelQ(int fuel){
+		currQ = currQ + fuel;
+	}
+		//bränsle mätare
+	public int getFuelN(){
+		return currN;
+	}
+
+	public int getFuelQ(){
+		return currQ;
+	}
+
+	public int requestN(){
+		return tankSizeN - currN;
+	}
+
+	public int requestQ(){
+		return tankSizeQ - currQ;
+	}
+	
+	public int getID(){
+		return id;
+	}
+		
 	
 	//skapa tråd
 	public void run(){
@@ -35,44 +65,66 @@ public class ships extends Thread{
 
 		Random rnd = new Random();
 		int sleepTime = rnd.nextInt(10000) + 1000;
+
 		while(true){
 
-			try{
-				//TODO skeppet tappar random mängd fuel (sleeptime)
-				Thread.sleep(sleepTime);
+			switch(id){
+				case 0:
+					while(true){
+						try{
+							Thread.sleep(sleepTime);
+						}
+						catch(InterruptedException e){
+							System.out.println("TIE-fighter " + id + " was interrupted");
+						}
+						if(deathstar.getQFuelSpaceStation() < tankSizeQ - 50){
+							deathstar.fillQTank(this);
+							System.out.println("The Death Star gets more Qfuel supplied to end the rebellion");
+						}
+						break;
+					}
+				case 1:
+					while(true){
+						try{
+							Thread.sleep(sleepTime);
+						}
+						catch(InterruptedException e){
+							System.out.println("TIE-fighter " + id + " was interrupted");
+						}
+						if(deathstar.getNFuelSpaceStation() < tankSizeN - 50){
+							deathstar.fillNTank(this);
+							System.out.println("The Death Star gets more Nfuel supplied to end the rebellion");
+						}
+						break;
+					}
+				default:
+					while(true){
+						try{
+							currN = currN - rnd.nextInt(100);
+							currQ = currQ - rnd.nextInt(100);
+
+							if(currN < 0){
+								currN = 0;
+							}
+							if(currQ < 0){
+								currQ = 0;
+							}
+							
+							Thread.sleep(sleepTime);
+						}
+						catch(InterruptedException e){
+							System.out.println("TIE-fighter " + id + " was interrupted");
+						}
+						if(currN < tankSizeN){
+							deathstar.refuelN(this);
+
+						}
+						if (currQ < tankSizeQ){
+							deathstar.refuelQ(this); 
+						}
+						break;	
+					}	
 			}
-			catch(InterruptedException e){
-				System.out.println("TIE-fighter " + id + " was interrupted");
-			}
-			currN = deathstar.refuelN(id, tankSizeN, currN);
-			currQ = deathstar.refuelQ(id, tankSizeQ, currQ);		}
-		
-	/*
-		skapa metod för refuel beteedende // kalla på monitor (spacestation)
-		refuel (vänta random tid)
-		skapa metod för TIE-fighter beteende
-			va i rymden i rnd tid
-        tie.filltank(ships  )
-
-
-		//todo här ska vi göra vår logik malin! :)
-			/*
-			 	att skeppen ska fyllas på med bränsle ifall de behöver det
-				ship.refuel
-					
-				att skeppen ska sova i rymden i en random tid zzZZzzz
-				att refueler-skeppen ska fylla på bränsle i death star
-
-				while(true){
-					när ett skepp behöver bränsle, kalla på refuel metoden i spacestation
-					när det är tomt i en tank, kalla på filltank metoden i spacestation
-						eller om en refueler har kommit till death star
-				}
-	*/
+		}
 	}
-	
-
-
-
-
 }

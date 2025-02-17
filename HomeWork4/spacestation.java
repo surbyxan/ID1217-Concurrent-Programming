@@ -30,52 +30,85 @@ public class spacestation {
 		this.Qfuel = Qmax;
 		this.ports = ports;
 	}
+
+	public int getNFuelSpaceStation(){
+		return Nfuel;
+	}
+
+	public int getQFuelSpaceStation(){
+		return Qfuel;
+	}
 	
 
-	public synchronized int refuelN(int id, int requestN, int currN){//metod för att tanka som vanligt
-        if(requestN > Nfuel ){
+	public synchronized void refuelN(ships ship){//metod för att tanka som vanligt
+        while(ship.requestN() > Nfuel || ports == 0){
 			try {
                 wait();
+				System.out.println("|-o-| TIE-fighter waits for Nfuel, not enough fuel in Death Star");
             } catch(InterruptedException e) {
-                System.out.println("TIE-fighter " + id + " was interrupted");
+                System.out.println("|-o-| TIE-fighter " + ship.getID() + " was interrupted");
             }
+				
         }
 		//int refuelTime = rnd.nextint(10);
-
-        currN = currN + requestN;
-		Nfuel = Nfuel - requestN;
-
-       return currN;
+		ports--;
+		//sleep
+		System.out.println("|-o-| TIE-fighter " + ship.getID() +  " are refueling N, to crush the rebellion");
+		Nfuel = Nfuel - ship.requestN();
+        ship.setFuelN(ship.requestN());
+		System.out.println("Nfuel: " + Nfuel);
+		ports++;
+		notifyAll();
 	}
 
 
-	public synchronized int refuelQ(int id, int requestQ, int currQ){//metod för att tanka som vanligt
-        while(requestQ > Qfuel){
+	public synchronized void refuelQ(ships ship){//metod för att tanka som vanligt
+        while(ship.requestQ() > Qfuel || ports == 0){
             //låt en annan tie fighter refuel 
 			try {
                 wait();
+				System.out.println("|-o-| TIE-fighter waits for Qfuel, not enough fuel in Death Star");
             } catch(InterruptedException e) {
-                System.out.println("TIE-fighter " + id + " was interrupted");
+                System.out.println("|-o-| TIE-fighter " + ship.getID() + " was interrupted");
             }
         }
 		//int refuelTime = rnd.nextint(10);
-
-        currQ = currQ + requestQ;
-		Qfuel = Qfuel - requestQ;
-
-	   return currQ;
+		ports--;
+		//sleep
+		System.out.println("|-o-| TIE-fighter " + ship.getID() +  " are refueling Q, to crush the rebellion");
+		Qfuel = Qfuel - ship.requestQ();
+		ship.setFuelQ(ship.requestQ());
+		System.out.println("Qfuel: " + Qfuel);
+		ports++;
+		notifyAll();
 	}
 
-	public synchronized void filltank(int id, int tankSizeQ, int tankSizeN){ //metod för att fylla på tanken med bränsle (spacestation)
-		if(Nmax - Nfuel > fueler.Nfuel && fueler.Nfuel != 0){
-			//filltank
+	public synchronized void fillNTank(ships ship){ //metod för att fylla på tanken med bränsle (spacestation)
+		while(Nmax - Nfuel < ship.getFuelN()){
+			try {
+                wait();
+            } catch(InterruptedException e) {
+                System.out.println("Refueler " + ship.getID() + " was interrupted");
+            }
 		}
-		else if(Qmax - QFuel > fueler.Qfuel && fueler.Nfuel != 0){
-			//filltank
+		//int refuelTime = rnd.nextint(10);
+		Nfuel = Nfuel + ship.getFuelN();
+		notifyAll();
+	}
+
+	public synchronized void fillQTank(ships ship){
+		while(Qmax - Qfuel < ship.getFuelQ()){
+			try {
+                wait();
+            } catch(InterruptedException e) {
+                System.out.println("Refueler " + ship.getID() + " was interrupted");
+            }
 		}
-		else{
-			//wait for space in tank
+		//int refuelTime = rnd.nextint(10);
+		Qfuel = Qfuel + ship.getFuelQ();
+		notifyAll();
 		}
+
 	}
 
 	/*
@@ -93,4 +126,3 @@ public class spacestation {
 
 	
 
-}
