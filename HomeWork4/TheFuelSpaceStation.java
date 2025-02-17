@@ -1,7 +1,7 @@
 package HomeWork4;
 
 public class TheFuelSpaceStation {
-	//! main 
+	//* main 
 	public static void main(String[] args) {
 		System.out.println("A long time ago in a galaxy far, far away...");
 		System.out.println("The death star is refueling its TIE-fighters");
