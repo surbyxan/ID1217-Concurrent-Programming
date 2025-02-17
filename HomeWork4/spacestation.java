@@ -5,47 +5,80 @@ import java.util.Random;
 import java.util.concurrent.*;
 import java.io.*;
 import java.net.*;
-import java.util.random.*;
+import java.util.Random.*;
 
 //! monitorn (death star)
 
 public class spacestation {
 	
-	/* typ klar tror vi
-	vi har:
-	
+	/* 
+		En monitor för att hålla koll på bränslet i death star och TIE-fighters
+		och för att fylla på bränsle i TIE-fighters och i death star
+	*/
+
 	Random rnd = new Random();
-	int Nmax = 500;
-	int Qmax = 500;
-	int Nfuel = Nmax;
-	int Qfuel =	Qmax;
+	int Qmax;
+	int Nfuel;
+	int Nmax;
+	int Qfuel;
+	int ports;
 
-
+	public spacestation(int Nmax, int Qmax, int ports){
+		this.Nmax = Nmax;
+		this.Qmax = Qmax;
+		this.Nfuel = Nmax;
+		this.Qfuel = Qmax;
+		this.ports = ports;
+	}
 	
-	synchronized public void refuel(thread TIEfighter){//metod för att tanka som vanligt
-        if(tiefighter.Nfuelrequest > N || tiefighter.Qfuelrequest > Q){
-            låt en annan tie fighter refuel 
+
+	public synchronized int refuelN(int id, int requestN, int currN){//metod för att tanka som vanligt
+        if(requestN > Nfuel ){
+			try {
+                wait();
+            } catch(InterruptedException e) {
+                System.out.println("TIE-fighter " + id + " was interrupted");
+            }
         }
-		int refuelTime = rnd.nextint(10);
-        thread.sleep(random);
-        tiefighter.Nfuel = tiefighter.Nfuel + tiefighterNfuelrequest;
-		Nfuel = Nfuel - tiefighter.Nfuelrequest;
-        tiefighter.Qfuel = tiefighter.Qfuel + tiefighterQfuelrequest;
-		Qfuel = Qfuel - tiefighter.Qfuelrequest;
+		//int refuelTime = rnd.nextint(10);
+
+        currN = currN + requestN;
+		Nfuel = Nfuel - requestN;
+
+       return currN;
 	}
 
-	synchronized public void filltank(thread fueler){ //metod för att fylla på tanken med bränsle (spacestation)
+
+	public synchronized int refuelQ(int id, int requestQ, int currQ){//metod för att tanka som vanligt
+        while(requestQ > Qfuel){
+            //låt en annan tie fighter refuel 
+			try {
+                wait();
+            } catch(InterruptedException e) {
+                System.out.println("TIE-fighter " + id + " was interrupted");
+            }
+        }
+		//int refuelTime = rnd.nextint(10);
+
+        currQ = currQ + requestQ;
+		Qfuel = Qfuel - requestQ;
+
+	   return currQ;
+	}
+
+	public synchronized void filltank(int id, int tankSizeQ, int tankSizeN){ //metod för att fylla på tanken med bränsle (spacestation)
 		if(Nmax - Nfuel > fueler.Nfuel && fueler.Nfuel != 0){
-			filltank
+			//filltank
 		}
 		else if(Qmax - QFuel > fueler.Qfuel && fueler.Nfuel != 0){
-			filltank
+			//filltank
 		}
 		else{
-			wait for space in tank
+			//wait for space in tank
 		}
 	}
 
+	/*
 	en metod att fylla på varsin fuel (trådar)
 	om fuel är tomt, pause refuel och ta in refuel ship
 	så ex om vi ökar en tie fighter med 10 N och 5 Q måste vi ta bort
