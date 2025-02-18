@@ -15,7 +15,6 @@ The second phase, the paring, is done by iterating the collected students and se
 #include <stdbool.h>
 
 #define TEACHER 0
-#define students n
 
 int main(int argc, char *argv[]){
 	int Id, partner, nofstudents;
