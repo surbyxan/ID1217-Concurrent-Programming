@@ -1,6 +1,14 @@
 // mpicc -o myprog myprog.c
 // ./
 //mpiexec -np 2 task
+
+/*
+This solution makes all the students send in their request to the teacher. And the teacher pairs the students
+1-n. If n is an odd number the student is not paired up and works alone. 
+the pairing is done in two phases, the first is when the student sends out the request and the teacher collecting them.
+The second phase, the paring, is done by iterating the collected students and sending the pairs back to the students,
+ i and i+1. When this is done the program prints out the pairings with the student ID and its partner.
+*/
 #include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
