@@ -1,5 +1,12 @@
 // mpicc -o task2 task2.c
 //mpiexec -np 2 task2
+/*
+In this solution a teacher randomly selects a student to start the pairing. This student partners up with the student to the left.
+It also tells the student to the left of the chosen student that it is thats student turn to find a partner. This continues in a 
+circle until either a student tries to tell the original student that it is its partner, or that it is that ones turn to pick again. 
+Since this is done in an array we loop around it with several if statements. If a student tries to partner up with the student to 
+the left and it is the original chosen by the teacher, the student will partner up with itself.
+*/
 #include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,13 +17,6 @@
 
 #define TAG_SINGLE 1
 #define TAG_TAKEN 2
-/*
-In this solution a teacher randomly selects a student to start the pairing. This student partners up with the student to the left.
-It also tells the student to the left of the chosen student that it is thats student turn to find a partner. This continues in a 
-circle until either a student tries to tell the original student that it is its partner, or that it is that ones turn to pick again. 
-Since this is done in an array we loop around it with several if statements. If a student tries to partner up with the student to 
-the left and it is the original chosen by the teacher, the student will partner up with itself.
-*/
 
 
 //a true random generating method taken from internetz
@@ -43,8 +43,7 @@ int main(int argc, char *argv[]){
         printf("Teacher: partner up boy %d\n", randomNum);
         fflush(stdout);
         MPI_Send(&randomNum, 1, MPI_INT, randomNum, TAG_SINGLE, MPI_COMM_WORLD);
-        //random id på studenty
-        //int studentid = rand(1-n)
+        //random id på student
         //skickar you're it till den.
 	}
     else{//! STUDENT 
@@ -55,7 +54,7 @@ int main(int argc, char *argv[]){
 
             //checks if it is the first process called by teacher
             if(Id == randomNum){
-                //first case (add case where id = 1 or 2)
+                //first case 
                 partner = randomNum - 1;
                 int nextSearch = randomNum - 2;
                 //checks the special case where we have to loop
@@ -72,11 +71,10 @@ int main(int argc, char *argv[]){
 
                     MPI_Send(&Id, 1, MPI_INT, partner, 2, MPI_COMM_WORLD);
                     MPI_Send(&Id, 1, MPI_INT, nextSearch, 1, MPI_COMM_WORLD);
+
                 } else{ //all the other cases where the students are pairing themselves
                     //updates if a partner is found
-                    if(status.MPI_TAG == 2 ){
-                        //printf("yay jag %d har en kompis %d\n", Id, recieved_ID);
-                        //fflush(stdout);                    
+                    if(status.MPI_TAG == 2 ){                   
                         partner = recieved_ID;
                         if(Id - 1 == randomNum){
                             break;
@@ -116,7 +114,6 @@ int main(int argc, char *argv[]){
                                 if(nextSearch == randomNum){
                                     break;
                                 }
-                                
                                 MPI_Send(&Id, 1, MPI_INT, nextSearch, 1, MPI_COMM_WORLD);
                         }
                         else{
@@ -134,21 +131,16 @@ int main(int argc, char *argv[]){
 
                             if(nextSearch == randomNum){
                                 break;
-                            }
-                            
-                                
+                            }                                
                             MPI_Send(&Id, 1, MPI_INT, nextSearch, 1, MPI_COMM_WORLD);
                         }
                     }
                 }
                 break;
             }         
-            printf("MEOW Hi I'm %d and my partner is %d\n", Id, partner);
+            printf("Hi I'm %d and my partner is %d\n", Id, partner);
             fflush(stdout);
         }	
-
-    	
     MPI_Finalize();
     return 0;
-
 }

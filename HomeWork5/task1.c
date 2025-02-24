@@ -1,7 +1,5 @@
 // mpicc -o myprog myprog.c
-// ./
 //mpiexec -np 2 task
-
 /*
 This solution makes all the students send in their request to the teacher. And the teacher pairs the students
 1-n. If n is an odd number the student is not paired up and works alone. 
@@ -21,7 +19,6 @@ int main(int argc, char *argv[]){
     MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &Id );
 	MPI_Comm_size(MPI_COMM_WORLD, &nofstudents);
-	
 
 	//TEACHER
     if(Id == TEACHER){
