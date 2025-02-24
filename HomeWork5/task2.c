@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
             MPI_Recv(&recieved_ID, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
             if(Id == randomNum){
                 //first case (add case where id = 1 or 2)
-                int partner = randomNum - 1;
+                partner = randomNum - 1;
                 int nextSearch = randomNum - 2;
                 if(Id == 1){
                     partner = nofstudents - 1;
