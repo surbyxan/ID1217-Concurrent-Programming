@@ -1,6 +1,4 @@
 // mpicc -o task2 task2.c
-
-// ./
 //mpiexec -np 2 task2
 #include "mpi.h"
 #include <stdio.h>
@@ -9,6 +7,9 @@
 #include <time.h>
 
 #define TEACHER 0
+
+#define TAG_SINGLE 1
+#define TAG_TAKEN 2
 
 
 //a true random generating method taken from internetz
@@ -32,8 +33,9 @@ int main(int argc, char *argv[]){
 
 	//! TEACHER
     if(Id == TEACHER){
-        printf("Teacher: partner up boy %d", randomNum);
-        //MPI_Send(&randomNum, 1, MPI_INT, randomNum, 1, MPI_COMM_WORLD);
+        printf("Teacher: partner up boy %d\n", randomNum);
+        fflush(stdout);
+        MPI_Send(&randomNum, 1, MPI_INT, randomNum, TAG_SINGLE, MPI_COMM_WORLD);
         //random id på studenty
         //int studentid = rand(1-n)
 
@@ -43,64 +45,78 @@ int main(int argc, char *argv[]){
 	}
     else{//! STUDENT 
         //hitta kompisar!!!!
-        int tag = 0;
-        if(randomNum == Id){
+        int recieved_ID;
+        
+        MPI_Recv(&recieved_ID, 1, MPI_INT, MPI_ANY_SOURCE, TAG_SINGLE, MPI_COMM_WORLD, &status);
+        if(Id == randomNum){
+            //recieve
             if(Id == 1){
-                MPI_Recv(&Id, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                partner = nofstudents;
-                printf("Hej %d vill du vara min kompis?\n", partner);
-                printf("kram! från %d ", Id);
-                tag = 1;
-                MPI_Send(&nofstudents, 1, MPI_INT, nofstudents - 1, tag, MPI_COMM_WORLD);
+                int partner = nofstudents;
+                
+            }
+            else{//first case
+                int partner = randomNum - 1;
+                printf("Hi %d, do you want to be my partner? From %d\n", partner, Id);
+                fflush(stdout);
+
+                MPI_Send(&partner, 1, MPI_INT, partner, 0, MPI_COMM_WORLD);
+            }
+        }
+        else{
+            int flag;
+
+            if(status.MPI_TAG == 1){ //är denna process taken
+                printf("meow");
+                //MPI_Recv(&recieved_ID, 1, MPI_INT, MPI_ANY_SOURCE, TAG_TAKEN, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                if(recieved_ID == 1 || randomNum != nofstudents){
+                    int partner =  recieved_ID + 1;
+                    int sent_ID = nofstudents;
+                    printf("Hi %d, do you want to be my partner? From %d\n", partner, Id);
+                    fflush(stdout);
+
+                    MPI_Send(&sent_ID, 1, MPI_INT,sent_ID, TAG_SINGLE, MPI_COMM_WORLD);
+                }
+                else if(randomNum != recieved_ID - 1){
+                    int partner = recieved_ID + 1;
+                    int sent_ID = recieved_ID - 1;
+                    printf("Hi %d, do you want to be my partner? From %d\n", partner, Id);
+                    fflush(stdout);
+
+                    MPI_Send(&sent_ID, 1, MPI_INT,sent_ID, TAG_SINGLE, MPI_COMM_WORLD);
+                    
+                }
+                else{
+                    printf("meow");
+                }
             }
             else{
-                MPI_Recv(&Id, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                partner = Id - 1;
-                printf("Hej %d vill du vara min kompis?\n", partner);
-                printf("kram! från %d ", Id);
-                tag = 1;
-                int partner_id = (Id - 1);
-                MPI_Send(&partner_id, 1, MPI_INT, partner_id, tag , MPI_COMM_WORLD);
-            }
-        }
-        
-        //MPI_Recv(&Id, 1, MPI_INT, Id + 1, tag, MPI_COMM_WORLD, &status);
-        if(Id == nofstudents){
-            MPI_Recv(&Id, 1, MPI_INT, 1, tag, MPI_COMM_WORLD, &status);
-        }
-       
-        
-        if(status.MPI_TAG == 0){
-            printf("hej! vill du vara min kompis?2\n");
-            partner = Id - 1;
-            tag = 1;
-            int partner_id = Id - 1;
-            MPI_Send(&partner_id, 1, MPI_INT, partner_id,tag, MPI_COMM_WORLD);
-            printf("Hi, I'm %d and my partner is %d\n", Id, partner);
-        }
-        if(status.MPI_TAG == 1){
-            //recevie va 1 alltså va kompisen uppdagen :(
-            printf("hej! vill du vara min kompis?");
-            partner = Id + 1;
-            tag = 0;
-            printf("Nej wtf du är ful och äcklig?!");
-            int partner_id = Id - 1;
-            MPI_Send(&partner_id, 1, MPI_INT, partner_id,tag, MPI_COMM_WORLD);
-        }
-                
-       
-        //den tar sin polare till vänster och blir kompis
-        //om till vänster är lärare, hoppa tillslutet.
-        //om till vänster är kompis, hoppa till vänster igen.
-        //om till vänster är upptagen så är du ensam.
-        //MPI_int = 0; (0 ingen kompis 1 kompis)
-        //skicka en 1 till din kompis och 0 till den du hatar
+                printf("meow");
 
-        if(randomNum == 1){
+                //MPI_Recv(&recieved_ID, 1, MPI_INT, MPI_ANY_SOURCE, TAG_SINGLE, MPI_COMM_WORLD, &status);
+                if(recieved_ID == 1 || randomNum != nofstudents){
+                    int partner =  recieved_ID + 1;
+                    int sent_ID = nofstudents;
+                    MPI_Send(&sent_ID, 1, MPI_INT,sent_ID, TAG_TAKEN, MPI_COMM_WORLD);
+                }
+                else if(randomNum != recieved_ID - 1){//vanliga case
+                    int partner = recieved_ID + 1;
+                    int sent_ID = recieved_ID - 1;
+                    MPI_Send(&sent_ID, 1, MPI_INT,sent_ID, TAG_TAKEN, MPI_COMM_WORLD);
+                    
+                }
+                else{
+                                        printf("meow2");
+
+                }  
+            }
             
-        }
-    }	
+        
+            printf("Hi I'm %d and my partner is %d\n", Id, partner);
+            fflush(stdout);
+        }	
+    }
 	
     MPI_Finalize();
     return 0;
+
 }
