@@ -10,6 +10,13 @@
 
 #define TAG_SINGLE 1
 #define TAG_TAKEN 2
+/*
+In this solution a teacher randomly selects a student to start the pairing. This student partners up with the student to the left.
+It also tells the student to the left of the chosen student that it is thats student turn to find a partner. This continues in a 
+circle until either a student tries to tell the original student that it is its partner, or that it is that ones turn to pick again. 
+Since this is done in an array we loop around it with several if statements. If a student tries to partner up with the student to 
+the left and it is the original chosen by the teacher, the student will partner up with itself.
+*/
 
 
 //a true random generating method taken from internetz
@@ -45,10 +52,13 @@ int main(int argc, char *argv[]){
         while(1){
             int recieved_ID;
             MPI_Recv(&recieved_ID, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+            //checks if it is the first process called by teacher
             if(Id == randomNum){
                 //first case (add case where id = 1 or 2)
                 partner = randomNum - 1;
                 int nextSearch = randomNum - 2;
+                //checks the special case where we have to loop
                 if(Id == 1){
                     partner = nofstudents - 1;
                     nextSearch = nofstudents - 2;
@@ -62,7 +72,8 @@ int main(int argc, char *argv[]){
 
                     MPI_Send(&Id, 1, MPI_INT, partner, 2, MPI_COMM_WORLD);
                     MPI_Send(&Id, 1, MPI_INT, nextSearch, 1, MPI_COMM_WORLD);
-                } else{
+                } else{ //all the other cases where the students are pairing themselves
+                    //updates if a partner is found
                     if(status.MPI_TAG == 2 ){
                         //printf("yay jag %d har en kompis %d\n", Id, recieved_ID);
                         //fflush(stdout);                    
@@ -71,7 +82,7 @@ int main(int argc, char *argv[]){
                             break;
                         }
                     }
-                    
+                    //algorithm to find partner, and tell which student to look for a partner
                     if(status.MPI_TAG == 1){
                         if(Id == 1){
                             printf("åh %d va upptagen :/, undra om nån annan vill vara med mig %d?\n", recieved_ID, Id);
